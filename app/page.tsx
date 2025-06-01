@@ -350,7 +350,7 @@ export default function Home() {
                 <div className="space-y-8">
                   <div className="relative w-full aspect-[16/9]">
                     <Image
-                      src="/image.png"
+                      src="/image.svg"
                       alt="Project Architecture Diagram"
                       fill
                       className="object-contain rounded-lg"

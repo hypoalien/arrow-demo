@@ -11,7 +11,7 @@ A full-stack voice-enabled AI assistant demonstrating real-time speech processin
 
 ## 🏗️ Architecture
 
-![Project Architecture](/public/image.png)
+![Project Architecture](/public/image.svg)
 
 The voice bot implements a complete voice interaction pipeline using state-of-the-art open-source models and APIs:
 
