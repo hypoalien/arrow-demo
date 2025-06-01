@@ -1,103 +1,388 @@
-import Image from "next/image";
+"use client";
+
+import {
+  useActionState,
+  useEffect,
+  useRef,
+  useState,
+  startTransition,
+} from "react";
+import { toast } from "sonner";
+import { usePlayer } from "@/lib/usePlayer";
+import { track } from "@vercel/analytics";
+import { useMicVAD, utils } from "@ricky0123/vad-react";
+import { VoiceButton } from "@/components/voice-button";
+import { motion, useAnimationControls } from "framer-motion";
+
+type Message = {
+  role: "user" | "assistant";
+  content: string;
+  latency?: number;
+};
+
+const ScrollingPrompts = () => {
+  const controls = useAnimationControls();
+  const prompts = [
+    'Try saying "Open LinkedIn"',
+    'Say "Show me his LinkedIn profile"',
+    'Try saying "Show me his resume"',
+    'Say "Open his resume"',
+    'Say "What are his skills?"',
+    'Try saying "Why Arrow?"',
+    'Say "What did he build?"',
+  ];
+
+  useEffect(() => {
+    const startAnimation = async () => {
+      await controls.start({
+        y: -2400,
+        transition: {
+          duration: 30,
+          ease: "linear",
+          repeat: Infinity,
+          repeatType: "loop",
+        },
+      });
+    };
+    startAnimation();
+  }, [controls]);
+
+  return (
+    <div className="fixed inset-0 flex items-center justify-center pointer-events-none overflow-hidden z-0">
+      <div className="relative h-screen w-[800px] overflow-hidden">
+        {/* Top gradient mask */}
+        <div className="absolute top-0 left-0 right-0 h-48 bg-gradient-to-b from-white dark:from-black to-transparent z-10" />
+
+        {/* Bottom gradient mask */}
+        <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-white dark:from-black to-transparent z-10" />
+
+        <motion.div
+          className="absolute space-y-16 w-full"
+          animate={controls}
+          style={{
+            y: 0,
+          }}
+        >
+          {/* First set of prompts */}
+          {prompts.map((prompt, index) => (
+            <div
+              key={index}
+              className="group text-center opacity-10 text-4xl font-medium text-neutral-800 dark:text-neutral-200 transition-all duration-300 hover:opacity-20"
+            >
+              <span className="relative">
+                {prompt}
+                <span className="absolute -left-6 top-1/2 -translate-y-1/2 text-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  👆
+                </span>
+              </span>
+            </div>
+          ))}
+          {/* Second set of prompts (duplicate) */}
+          {prompts.map((prompt, index) => (
+            <div
+              key={`dup-${index}`}
+              className="group text-center opacity-10 text-4xl font-medium text-neutral-800 dark:text-neutral-200 transition-all duration-300 hover:opacity-20"
+            >
+              <span className="relative">
+                {prompt}
+                <span className="absolute -left-6 top-1/2 -translate-y-1/2 text-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  👆
+                </span>
+              </span>
+            </div>
+          ))}
+          {/* Third set of prompts (duplicate) */}
+          {prompts.map((prompt, index) => (
+            <div
+              key={`dup2-${index}`}
+              className="group text-center opacity-10 text-4xl font-medium text-neutral-800 dark:text-neutral-200 transition-all duration-300 hover:opacity-20"
+            >
+              <span className="relative">
+                {prompt}
+                <span className="absolute -left-6 top-1/2 -translate-y-1/2 text-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  👆
+                </span>
+              </span>
+            </div>
+          ))}
+          {/* Fourth set of prompts (duplicate) */}
+          {prompts.map((prompt, index) => (
+            <div
+              key={`dup3-${index}`}
+              className="group text-center opacity-10 text-4xl font-medium text-neutral-800 dark:text-neutral-200 transition-all duration-300 hover:opacity-20"
+            >
+              <span className="relative">
+                {prompt}
+                <span className="absolute -left-6 top-1/2 -translate-y-1/2 text-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  👆
+                </span>
+              </span>
+            </div>
+          ))}
+          {/* Fifth set of prompts (duplicate) for more seamless scrolling */}
+          {prompts.map((prompt, index) => (
+            <div
+              key={`dup4-${index}`}
+              className="group text-center opacity-10 text-4xl font-medium text-neutral-800 dark:text-neutral-200 transition-all duration-300 hover:opacity-20"
+            >
+              <span className="relative">
+                {prompt}
+                <span className="absolute -left-6 top-1/2 -translate-y-1/2 text-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  👆
+                </span>
+              </span>
+            </div>
+          ))}
+        </motion.div>
+      </div>
+    </div>
+  );
+};
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const player = usePlayer();
+  const [transcription, setTranscription] = useState("");
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  const vad = useMicVAD({
+    startOnLoad: true,
+    onSpeechEnd: (audio) => {
+      player.stop();
+      const wav = utils.encodeWAV(audio);
+      const blob = new Blob([wav], { type: "audio/wav" });
+      startTransition(() => submit(blob));
+      const isFirefox = navigator.userAgent.includes("Firefox");
+      if (isFirefox) vad.pause();
+    },
+    positiveSpeechThreshold: 0.6,
+    minSpeechFrames: 4,
+  });
+
+  const [messages, submit, isPending] = useActionState<Array<Message>, Blob>(
+    async (prevMessages, data) => {
+      const formData = new FormData();
+      formData.append("input", data, "audio.wav");
+      track("Speech input");
+
+      for (const message of prevMessages) {
+        formData.append("message", JSON.stringify(message));
+      }
+
+      const submittedAt = Date.now();
+
+      const response = await fetch("/api", {
+        method: "POST",
+        body: formData,
+      });
+
+      const transcript = decodeURIComponent(
+        response.headers.get("X-Transcript") || ""
+      );
+      const text = decodeURIComponent(response.headers.get("X-Response") || "");
+      const toolCall = response.headers.get("X-Tool-Call");
+
+      if (!response.ok || !transcript || (!text && !toolCall)) {
+        if (response.status === 429) {
+          toast.error("Too many requests. Please try again later.");
+        } else {
+          toast.error((await response.text()) || "An error occurred.");
+        }
+
+        return prevMessages;
+      }
+
+      const latency = Date.now() - submittedAt;
+
+      // Handle tool calls
+      if (toolCall) {
+        try {
+          const toolCallData = JSON.parse(decodeURIComponent(toolCall));
+          console.log("Tool call received:", toolCallData); // Debug log
+
+          if (toolCallData.function.name === "openLinkedIn") {
+            // Check if the tab is already open
+            const linkedInUrl = "http://linkedin.com/in/anisettyanudeep";
+            const existingWindow = window.open("", "_blank");
+
+            if (existingWindow) {
+              // If we can open a new window, close it and open LinkedIn
+              existingWindow.close();
+              window.open(linkedInUrl, "_blank", "noopener,noreferrer");
+            } else {
+              // If we can't open a new window, the tab might be blocked
+              toast.error("Please allow popups to open LinkedIn profile");
+            }
+
+            return [
+              ...prevMessages,
+              {
+                role: "user",
+                content: transcript,
+              },
+              {
+                role: "assistant",
+                content: text || "Opening LinkedIn profile...",
+                latency,
+              },
+            ];
+          }
+
+          if (toolCallData.function.name === "openResume") {
+            // Check if the tab is already open
+            const resumeUrl =
+              "https://drive.google.com/file/d/1cja1FQJ4F79ZQ0vIP6C8w_zPbX8qXIhK/view?usp=sharing";
+            const existingWindow = window.open("", "_blank");
+
+            if (existingWindow) {
+              // If we can open a new window, close it and open resume
+              existingWindow.close();
+              window.open(resumeUrl, "_blank", "noopener,noreferrer");
+            } else {
+              // If we can't open a new window, the tab might be blocked
+              toast.error("Please allow popups to open resume");
+            }
+
+            return [
+              ...prevMessages,
+              {
+                role: "user",
+                content: transcript,
+              },
+              {
+                role: "assistant",
+                content: text || "Opening resume...",
+                latency,
+              },
+            ];
+          }
+        } catch (error) {
+          console.error("Error parsing tool call:", error);
+        }
+      }
+
+      if (response.body) {
+        player.play(response.body, () => {
+          const isFirefox = navigator.userAgent.includes("Firefox");
+          if (isFirefox) vad.start();
+        });
+      }
+
+      setTranscription(transcript);
+
+      return [
+        ...prevMessages,
+        {
+          role: "user",
+          content: transcript,
+        },
+        {
+          role: "assistant",
+          content: text,
+          latency,
+        },
+      ];
+    },
+    []
+  );
+
+  return (
+    <div className="h-screen overflow-hidden relative">
+      <ScrollingPrompts />
+      <div className="h-full flex items-center justify-center p-4 relative z-10">
+        <div className="relative w-full max-w-4xl">
+          {/* Top gradient mask for main content */}
+          <div className="absolute -top-24 left-0 right-0 h-24 bg-gradient-to-b from-transparent to-white/80 dark:to-black/80 z-20" />
+
+          {/* Bottom gradient mask for main content */}
+          <div className="absolute -bottom-24 left-0 right-0 h-24 bg-gradient-to-t from-transparent to-white/80 dark:to-black/80 z-20" />
+
+          <div className="relative space-y-6 bg-white/60 dark:bg-black/60 backdrop-blur-sm rounded-xl p-8">
+            {/* Header */}
+            <div className="text-center space-y-2">
+              <h1 className="text-2xl font-bold text-neutral-800 dark:text-neutral-200">
+                Arrow AI Assistant Demo
+              </h1>
+              <p className="text-neutral-500 dark:text-neutral-400 text-sm max-w-xl mx-auto">
+                A voice-enabled AI assistant demonstrating full-stack
+                engineering capabilities with real-time speech processing and
+                natural language understanding.
+              </p>
+            </div>
+
+            {/* Messages display area */}
+            <div className="text-neutral-400 dark:text-neutral-600 text-center max-w-xl mx-auto text-balance space-y-2">
+              {messages.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-lg">
+                    {messages.at(-1)?.content}
+                    <span className="text-xs font-mono text-neutral-300 dark:text-neutral-700">
+                      {" "}
+                      ({messages.at(-1)?.latency}ms)
+                    </span>
+                  </p>
+                </div>
+              )}
+
+              {messages.length === 0 && (
+                <p>Start talking to interact with the AI assistant.</p>
+              )}
+            </div>
+
+            {/* Voice Button */}
+            <div className="flex justify-center">
+              <VoiceButton isListening={vad.userSpeaking} audioLevel={0} />
+            </div>
+
+            {/* Transcription display */}
+            {transcription && (
+              <div className="text-center text-neutral-500 dark:text-neutral-400">
+                <p className="text-sm">Transcription:</p>
+                <p className="mt-1">{transcription}</p>
+              </div>
+            )}
+
+            {/* Powered by section */}
+            <div className="mt-8 pt-6 border-t border-neutral-200 dark:border-neutral-800">
+              <p className="text-center text-sm text-neutral-500 dark:text-neutral-400 mb-4">
+                Powered by
+              </p>
+              <div className="flex flex-wrap justify-center gap-4">
+                <a
+                  href="https://vercel.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white transition-colors"
+                >
+                  Vercel
+                </a>
+                <a
+                  href="https://www.vad.ricky0123.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white transition-colors"
+                >
+                  VAD
+                </a>
+                <a
+                  href="https://cartesia.ai/sonic"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white transition-colors"
+                >
+                  Sonic
+                </a>
+                <a
+                  href="https://groq.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-neutral-600 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white transition-colors"
+                >
+                  Groq
+                </a>
+              </div>
+            </div>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </div>
     </div>
   );
 }
