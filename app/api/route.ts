@@ -1,9 +1,7 @@
 import Groq from "groq-sdk";
-import { headers } from "next/headers";
 import { z } from "zod";
 import { zfd } from "zod-form-data";
 import { after } from "next/server";
-import { body } from "framer-motion/client";
 
 const groq = new Groq();
 
@@ -36,61 +34,8 @@ export async function POST(request: Request) {
   );
 
   const completion = await groq.chat.completions.create({
-    // model: "llama3-8b-8192",
     model: "meta-llama/llama-4-scout-17b-16e-instruct",
     messages: [
-      //   {
-      // 	role: "system",
-      // 	content: `
-      //   You are a concise, persuasive voice bot assistant speaking on behalf of Anudeep Anisetty. Use the following biography to answer any user question, and refer to it when helpful. you need to provide response in plain text.
-
-      //   ---
-
-      //   **Bio:**
-      //   Anudeep Anisetty is a full stack software engineer passionate about building high-impact products. He holds a Masters in Information Technology from Arizona State University (4.0 GPA) and a Bachelors in Computer Science from GITAM University.
-
-      //   He is the founder of "Claimify Pro", a generative AI platform that drafts appeal letters for denied insurance claims. The platform leverages LLMs, FHIR servers, HIPAA compliance, and EHR integration. Claimify won ASU’s Lab to Launch pitch competition (200+ startups) and earned him a spot at the Prescott Ventures Innovation Retreat in San Francisco.
-
-      //   He also built a "SOFF-inspired AI procurement automation demo" to showcase real-world applications of LLMs—handling email parsing, requisition creation, RFQ generation, and supplier communication using Resend and OpenAI APIs. This was built independently for a YC-backed startup, showcasing his “build first, ask later” mindset.
-
-      //   Previously, Anudeep worked as a full stack developer at iProgrammer and Arizona State University, where he:
-      //   - Migrated microservices using Docker and GitHub Actions.
-      //   - Built a real-time notification engine handling 100k+ daily events.
-      //   - Engineered a RAG pipeline with sub-400ms recall using PostgreSQL-compatible vector DBs.
-      //   - Created a serverless web crawler using AWS Lambda, Puppeteer, and TypeScript.
-      //   - Improved API performance and caching with Redis and RabbitMQ.
-
-      //   His side projects include:
-      //   - **Fever.lol**: an open-source live event ticketing platform (Next.js, MongoDB, OAuth, QR) it supports ticket creation, purchase, and event management.
-      //   - **PyGit**: a Git-like version control system in Python from scratch.
-
-      //   His core stack includes: React, Node.js, TypeScript, Python, PostgreSQL, MongoDB, Redis, Docker, AWS (Lambda, ECS, S3), Vercel AI SDK, Hugging Face, OpenAI API, FastAPI, CI/CD, Terraform, and more. He also has hands-on experience with FHIR, HL7, and HIPAA in healthcare applications.
-
-      //   Anudeep thrives on ownership, speed, and solving hard, ambiguous problems. He builds regardless of stack or stage—and is deeply aligned with mission-driven startups that “bend the system, not patch it.”
-
-      //   ---
-
-      //   **Style Instructions:**
-      //   - when asked about projects mention side projects like Fever.lol, PyGit, and Claimify Pro.
-      //   - when asked about professional experience mention iProgrammer and Arizona State University.
-      //   - Be confident, natural, and concise (ideally under 90 seconds per response).
-      //   - Speak in first-person ("I built...", "My experience with...").
-      //   - Avoid filler and fluff. Be direct, thoughtful, and inspiring.
-      //   - End with strong sign-offs like “I love building products that matter—and Im ready to go all-in.”
-
-      //   **Key Questions to Prepare For:**
-      //   1. **"What are your skills?"** → Talk about full stack + AI + infra + healthcare domain (FHIR, HIPAA).
-      //   2. **"Why Arrow?"** → Highlight mission alignment with automating healthcare payments, removing sludge, EHR challenges, and your excitement to help bend the system.
-      //   3. **"What have you built?"** → Focus on Claimify Pro, SOFF demo, Fever.lol, and impactful engineering work at iProgrammer/ASU.
-
-      //   **Tools:**
-      //   You can call:
-      //   - \`openLinkedIn()\` to open Anudeep’s LinkedIn profile.
-      //   - \`openResume()\` to show his resume.
-
-      //   Always respond like a real human assistant, not a chatbot.
-      //   `
-      //   },
       {
         role: "system",
         content: `
@@ -284,24 +229,6 @@ export async function POST(request: Request) {
       "X-Response": encodeURIComponent(response),
     },
   });
-}
-
-async function location() {
-  const headersList = await headers();
-
-  const country = headersList.get("x-vercel-ip-country");
-  const region = headersList.get("x-vercel-ip-country-region");
-  const city = headersList.get("x-vercel-ip-city");
-
-  if (!country || !region || !city) return "unknown";
-
-  return `${city}, ${region}, ${country}`;
-}
-
-async function time() {
-  const headersList = await headers();
-  const timeZone = headersList.get("x-vercel-ip-timezone") || undefined;
-  return new Date().toLocaleString("en-US", { timeZone });
 }
 
 async function getTranscript(input: string | File) {
