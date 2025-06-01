@@ -179,7 +179,7 @@ export default function Home() {
     minSpeechFrames: 4,
   });
 
-  const [messages, submit, isPending] = useActionState<Array<Message>, Blob>(
+  const [messages, submit] = useActionState<Array<Message>, Blob>(
     async (prevMessages, data) => {
       const formData = new FormData();
       formData.append("input", data, "audio.wav");
@@ -392,12 +392,12 @@ export default function Home() {
                       </h3>
                       <p>
                         The transcript, along with prior conversation context,
-                        is sent to Groq's LLM inference API using:
+                        is sent to Groq&apos;s LLM inference API using:
                       </p>
                       <p>Model: meta-llama/llama-4-scout-17b-16e-instruct</p>
                       <p>
-                        Returns a short, confident text reply as a "voice
-                        assistant" speaking on behalf of Anudeep Anisetty.
+                        Returns a short, confident text reply as a &quot;voice
+                        assistant&quot; speaking on behalf of Anudeep Anisetty.
                       </p>
                       <p>
                         Tool functions (openResume(), openLinkedIn()) are added,
@@ -410,7 +410,7 @@ export default function Home() {
                         🔊 4. Text-to-Speech
                       </h3>
                       <p>
-                        The final LLM-generated reply is sent to Cartesia's
+                        The final LLM-generated reply is sent to Cartesia&apos;s
                         Sonic API for audio synthesis.
                       </p>
                       <p>
@@ -439,7 +439,8 @@ export default function Home() {
                           via voice.
                         </li>
                         <li>
-                          Ultra-low latency thanks to Groq's inference speed.
+                          Ultra-low latency thanks to Groq&apos;s inference
+                          speed.
                         </li>
                         <li>
                           Clear separation between stages (VAD → STT → LLM →
