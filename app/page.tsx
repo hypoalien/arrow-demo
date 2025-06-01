@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import Image from "next/image";
+import { WordRotate } from "@/components/magicui/word-rotate";
 
 type Message = {
   role: "user" | "assistant";
@@ -22,17 +23,8 @@ type Message = {
   latency?: number;
 };
 
-const ScrollingPrompts = () => {
+const ScrollingPrompts = ({ prompts }: { prompts: string[] }) => {
   const controls = useAnimationControls();
-  const prompts = [
-    'Try saying "Open LinkedIn"',
-    'Say "Show me his LinkedIn profile"',
-    'Try saying "Show me his resume"',
-    'Say "Open his resume"',
-    'Say "What are his skills?"',
-    'Try saying "Why Arrow?"',
-    'Say "What did he build?"',
-  ];
 
   useEffect(() => {
     const startAnimation = async () => {
@@ -53,10 +45,10 @@ const ScrollingPrompts = () => {
     <div className="fixed inset-0 flex items-center justify-center pointer-events-none overflow-hidden z-0">
       <div className="relative h-screen w-[800px] overflow-hidden">
         {/* Top gradient mask */}
-        <div className="absolute top-0 left-0 right-0 h-48 bg-gradient-to-b from-white dark:from-black to-transparent z-10" />
+        <div className="absolute top-0 left-0 right-0 h-64 bg-gradient-to-b from-white/80 via-white/40 to-transparent z-10" />
 
         {/* Bottom gradient mask */}
-        <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-white dark:from-black to-transparent z-10" />
+        <div className="absolute bottom-0 left-0 right-0 h-64 bg-gradient-to-t from-white/80 via-white/40 to-transparent z-10" />
 
         <motion.div
           className="absolute space-y-16 w-full"
@@ -69,7 +61,7 @@ const ScrollingPrompts = () => {
           {prompts.map((prompt, index) => (
             <div
               key={index}
-              className="group text-center opacity-10 text-4xl font-medium text-neutral-800 dark:text-neutral-200 transition-all duration-300 hover:opacity-20"
+              className="group text-center opacity-20 text-5xl font-medium text-neutral-800 dark:text-neutral-200 transition-all duration-300 hover:opacity-30"
             >
               <span className="relative">
                 {prompt}
@@ -83,7 +75,7 @@ const ScrollingPrompts = () => {
           {prompts.map((prompt, index) => (
             <div
               key={`dup-${index}`}
-              className="group text-center opacity-10 text-4xl font-medium text-neutral-800 dark:text-neutral-200 transition-all duration-300 hover:opacity-20"
+              className="group text-center opacity-20 text-5xl font-medium text-neutral-800 dark:text-neutral-200 transition-all duration-300 hover:opacity-30"
             >
               <span className="relative">
                 {prompt}
@@ -97,7 +89,7 @@ const ScrollingPrompts = () => {
           {prompts.map((prompt, index) => (
             <div
               key={`dup2-${index}`}
-              className="group text-center opacity-10 text-4xl font-medium text-neutral-800 dark:text-neutral-200 transition-all duration-300 hover:opacity-20"
+              className="group text-center opacity-20 text-5xl font-medium text-neutral-800 dark:text-neutral-200 transition-all duration-300 hover:opacity-30"
             >
               <span className="relative">
                 {prompt}
@@ -111,7 +103,7 @@ const ScrollingPrompts = () => {
           {prompts.map((prompt, index) => (
             <div
               key={`dup3-${index}`}
-              className="group text-center opacity-10 text-4xl font-medium text-neutral-800 dark:text-neutral-200 transition-all duration-300 hover:opacity-20"
+              className="group text-center opacity-20 text-5xl font-medium text-neutral-800 dark:text-neutral-200 transition-all duration-300 hover:opacity-30"
             >
               <span className="relative">
                 {prompt}
@@ -125,7 +117,7 @@ const ScrollingPrompts = () => {
           {prompts.map((prompt, index) => (
             <div
               key={`dup4-${index}`}
-              className="group text-center opacity-10 text-4xl font-medium text-neutral-800 dark:text-neutral-200 transition-all duration-300 hover:opacity-20"
+              className="group text-center opacity-20 text-5xl font-medium text-neutral-800 dark:text-neutral-200 transition-all duration-300 hover:opacity-30"
             >
               <span className="relative">
                 {prompt}
@@ -145,6 +137,26 @@ export default function Home() {
   const player = usePlayer();
   const [transcription, setTranscription] = useState("");
   const [showArchitecture, setShowArchitecture] = useState(false);
+
+  const scrollingPrompts = [
+    'Try saying "Open LinkedIn"',
+    'Say "Show me his LinkedIn profile"',
+    'Try saying "Show me his resume"',
+    'Say "Open his resume"',
+    'Say "What are his skills?"',
+    'Try saying "Why Arrow?"',
+    'Say "What did he build?"',
+  ];
+
+  const rotatingPrompts = [
+    "Open LinkedIn",
+    "Show me his LinkedIn profile",
+    "Show me his resume",
+    "Open his resume",
+    "What are his skills?",
+    "Why Arrow?",
+    "What did he build?",
+  ];
 
   // Add keyboard shortcut handler
   useEffect(() => {
@@ -303,7 +315,7 @@ export default function Home() {
 
   return (
     <div className="h-screen overflow-hidden relative">
-      <ScrollingPrompts />
+      <ScrollingPrompts prompts={scrollingPrompts} />
       <div className="h-full flex items-center justify-center p-4 relative z-10">
         <div className="relative w-full max-w-4xl">
           {/* Top gradient mask for main content */}
@@ -330,6 +342,24 @@ export default function Home() {
                 </kbd>{" "}
                 to view architecture
               </p>
+            </div>
+
+            {/* Rotating Prompts */}
+            <div className="text-center">
+              <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-2">
+                Try asking:
+              </p>
+              <WordRotate
+                words={rotatingPrompts}
+                duration={5000}
+                className="text-lg font-medium text-neutral-500 dark:text-neutral-400"
+                motionProps={{
+                  initial: { opacity: 0, y: 20 },
+                  animate: { opacity: 1, y: 0 },
+                  exit: { opacity: 0, y: -20 },
+                  transition: { duration: 0.5, ease: "easeInOut" },
+                }}
+              />
             </div>
 
             {/* Architecture Dialog */}
