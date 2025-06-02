@@ -43,15 +43,15 @@ const ScrollingPrompts = ({ prompts }: { prompts: string[] }) => {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center pointer-events-none overflow-hidden z-0">
-      <div className="relative h-screen w-[800px] overflow-hidden">
+      <div className="relative h-screen w-full max-w-[800px] overflow-hidden">
         {/* Top gradient mask */}
-        <div className="absolute top-0 left-0 right-0 h-64 bg-gradient-to-b from-white/80 via-white/40 to-transparent z-10" />
+        <div className="absolute top-0 left-0 right-0 h-64 bg-gradient-to-b from-white/90 via-white/50 to-transparent z-10" />
 
         {/* Bottom gradient mask */}
-        <div className="absolute bottom-0 left-0 right-0 h-64 bg-gradient-to-t from-white/80 via-white/40 to-transparent z-10" />
+        <div className="absolute bottom-0 left-0 right-0 h-64 bg-gradient-to-t from-white/90 via-white/50 to-transparent z-10" />
 
         <motion.div
-          className="absolute space-y-16 w-full"
+          className="absolute space-y-8 md:space-y-16 w-full"
           animate={controls}
           style={{
             y: 0,
@@ -61,72 +61,32 @@ const ScrollingPrompts = ({ prompts }: { prompts: string[] }) => {
           {prompts.map((prompt, index) => (
             <div
               key={index}
-              className="group text-center opacity-20 text-5xl font-medium text-neutral-800 dark:text-neutral-200 transition-all duration-300 hover:opacity-30"
+              className="group text-center opacity-30 md:opacity-20 text-2xl md:text-5xl font-medium text-neutral-900 dark:text-neutral-100 transition-all duration-300 hover:opacity-40 md:hover:opacity-30"
             >
               <span className="relative">
                 {prompt}
-                <span className="absolute -left-6 top-1/2 -translate-y-1/2 text-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <span className="absolute -left-6 top-1/2 -translate-y-1/2 text-xl md:text-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                   👆
                 </span>
               </span>
             </div>
           ))}
-          {/* Second set of prompts (duplicate) */}
-          {prompts.map((prompt, index) => (
-            <div
-              key={`dup-${index}`}
-              className="group text-center opacity-20 text-5xl font-medium text-neutral-800 dark:text-neutral-200 transition-all duration-300 hover:opacity-30"
-            >
-              <span className="relative">
-                {prompt}
-                <span className="absolute -left-6 top-1/2 -translate-y-1/2 text-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  👆
+          {/* Duplicate sets with same mobile responsiveness */}
+          {[...Array(4)].map((_, setIndex) =>
+            prompts.map((prompt, index) => (
+              <div
+                key={`dup${setIndex}-${index}`}
+                className="group text-center opacity-30 md:opacity-20 text-2xl md:text-5xl font-medium text-neutral-900 dark:text-neutral-100 transition-all duration-300 hover:opacity-40 md:hover:opacity-30"
+              >
+                <span className="relative">
+                  {prompt}
+                  <span className="absolute -left-6 top-1/2 -translate-y-1/2 text-xl md:text-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    👆
+                  </span>
                 </span>
-              </span>
-            </div>
-          ))}
-          {/* Third set of prompts (duplicate) */}
-          {prompts.map((prompt, index) => (
-            <div
-              key={`dup2-${index}`}
-              className="group text-center opacity-20 text-5xl font-medium text-neutral-800 dark:text-neutral-200 transition-all duration-300 hover:opacity-30"
-            >
-              <span className="relative">
-                {prompt}
-                <span className="absolute -left-6 top-1/2 -translate-y-1/2 text-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  👆
-                </span>
-              </span>
-            </div>
-          ))}
-          {/* Fourth set of prompts (duplicate) */}
-          {prompts.map((prompt, index) => (
-            <div
-              key={`dup3-${index}`}
-              className="group text-center opacity-20 text-5xl font-medium text-neutral-800 dark:text-neutral-200 transition-all duration-300 hover:opacity-30"
-            >
-              <span className="relative">
-                {prompt}
-                <span className="absolute -left-6 top-1/2 -translate-y-1/2 text-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  👆
-                </span>
-              </span>
-            </div>
-          ))}
-          {/* Fifth set of prompts (duplicate) for more seamless scrolling */}
-          {prompts.map((prompt, index) => (
-            <div
-              key={`dup4-${index}`}
-              className="group text-center opacity-20 text-5xl font-medium text-neutral-800 dark:text-neutral-200 transition-all duration-300 hover:opacity-30"
-            >
-              <span className="relative">
-                {prompt}
-                <span className="absolute -left-6 top-1/2 -translate-y-1/2 text-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  👆
-                </span>
-              </span>
-            </div>
-          ))}
+              </div>
+            ))
+          )}
         </motion.div>
       </div>
     </div>
@@ -319,40 +279,46 @@ export default function Home() {
       <div className="h-full flex items-center justify-center p-4 relative z-10">
         <div className="relative w-full max-w-4xl">
           {/* Top gradient mask for main content */}
-          <div className="absolute -top-24 left-0 right-0 h-24 bg-gradient-to-b from-transparent to-white/80 dark:to-black/80 z-20" />
+          <div className="absolute -top-24 left-0 right-0 h-24 bg-gradient-to-b from-transparent to-white/90 dark:to-black/90 z-20" />
 
           {/* Bottom gradient mask for main content */}
-          <div className="absolute -bottom-24 left-0 right-0 h-24 bg-gradient-to-t from-transparent to-white/80 dark:to-black/80 z-20" />
+          <div className="absolute -bottom-24 left-0 right-0 h-24 bg-gradient-to-t from-transparent to-white/90 dark:to-black/90 z-20" />
 
-          <div className="relative space-y-6 bg-white/60 dark:bg-black/60 backdrop-blur-sm rounded-xl p-8">
+          <div className="relative space-y-4 md:space-y-6 bg-white/80 dark:bg-black/80 backdrop-blur-md rounded-xl p-4 md:p-8">
             {/* Header */}
             <div className="text-center space-y-2">
-              <h1 className="text-2xl font-bold text-neutral-800 dark:text-neutral-200">
+              <h1 className="text-xl md:text-2xl font-bold text-neutral-800 dark:text-neutral-200">
                 Arrow AI Assistant Demo
               </h1>
-              <p className="text-neutral-500 dark:text-neutral-400 text-sm max-w-xl mx-auto">
+              <p className="text-neutral-500 dark:text-neutral-400 text-xs md:text-sm max-w-xl mx-auto">
                 A voice-enabled AI assistant demonstrating full-stack
                 engineering capabilities with real-time speech processing and
                 natural language understanding.
               </p>
-              <p className="text-xs text-neutral-400 dark:text-neutral-500">
-                Press{" "}
+              <div className="flex items-center justify-center gap-2 text-xs text-neutral-400 dark:text-neutral-500">
+                <span>Press</span>
                 <kbd className="px-2 py-1 text-xs font-semibold text-gray-800 bg-gray-100 border border-gray-200 rounded dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600">
                   k
-                </kbd>{" "}
-                to view architecture
-              </p>
+                </kbd>
+                <span>or</span>
+                <button
+                  onClick={() => setShowArchitecture(true)}
+                  className="px-2 py-1 text-xs font-semibold text-gray-800 bg-gray-100 border border-gray-200 rounded hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600 dark:hover:bg-gray-600 transition-colors"
+                >
+                  View Architecture
+                </button>
+              </div>
             </div>
 
             {/* Rotating Prompts */}
             <div className="text-center">
-              <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-2">
+              <p className="text-xs md:text-sm text-neutral-500 dark:text-neutral-400 mb-2">
                 Try asking:
               </p>
               <WordRotate
                 words={rotatingPrompts}
                 duration={5000}
-                className="text-lg font-medium text-neutral-500 dark:text-neutral-400"
+                className="text-base md:text-lg font-medium text-neutral-500 dark:text-neutral-400"
                 motionProps={{
                   initial: { opacity: 0, y: 20 },
                   animate: { opacity: 1, y: 0 },
@@ -364,15 +330,17 @@ export default function Home() {
 
             {/* Architecture Dialog */}
             <Dialog open={showArchitecture} onOpenChange={setShowArchitecture}>
-              <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
+              <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto p-4 md:p-6">
                 <DialogHeader>
-                  <DialogTitle>Project Architecture</DialogTitle>
-                  <DialogDescription>
+                  <DialogTitle className="text-xl md:text-2xl">
+                    Project Architecture
+                  </DialogTitle>
+                  <DialogDescription className="text-sm md:text-base">
                     A full-stack voice interaction pipeline using
                     state-of-the-art open-source models and APIs
                   </DialogDescription>
                 </DialogHeader>
-                <div className="space-y-8">
+                <div className="space-y-6 md:space-y-8">
                   <div className="relative w-full aspect-[16/9]">
                     <Image
                       src="/image.svg"
@@ -381,7 +349,7 @@ export default function Home() {
                       className="object-contain rounded-lg"
                     />
                   </div>
-                  <div className="space-y-6 text-sm text-neutral-600 dark:text-neutral-400">
+                  <div className="space-y-4 md:space-y-6 text-xs md:text-sm text-neutral-600 dark:text-neutral-400">
                     <div className="space-y-3">
                       <h3 className="font-semibold text-base text-neutral-800 dark:text-neutral-200">
                         🔉 1. Voice Input (Frontend)
@@ -482,7 +450,7 @@ export default function Home() {
             <div className="text-neutral-400 dark:text-neutral-600 text-center max-w-xl mx-auto text-balance space-y-2">
               {messages.length > 0 && (
                 <div className="space-y-2">
-                  <p className="text-lg">
+                  <p className="text-base md:text-lg">
                     {messages.at(-1)?.content}
                     <span className="text-xs font-mono text-neutral-300 dark:text-neutral-700">
                       {" "}
@@ -493,7 +461,9 @@ export default function Home() {
               )}
 
               {messages.length === 0 && (
-                <p>Start talking to interact with the AI assistant.</p>
+                <p className="text-sm md:text-base">
+                  Start talking to interact with the AI assistant.
+                </p>
               )}
             </div>
 
@@ -505,8 +475,8 @@ export default function Home() {
             {/* Transcription display */}
             {transcription && (
               <div className="text-center text-neutral-500 dark:text-neutral-400">
-                <p className="text-sm">Transcription:</p>
-                <p className="mt-1">{transcription}</p>
+                <p className="text-xs md:text-sm">Transcription:</p>
+                <p className="mt-1 text-sm md:text-base">{transcription}</p>
               </div>
             )}
 
@@ -516,10 +486,10 @@ export default function Home() {
                 href="https://github.com/hypoalien/arrow-demo"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-700 transition-colors"
+                className="inline-flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm font-medium text-neutral-700 dark:text-neutral-300 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-700 transition-colors"
               >
                 <svg
-                  className="w-5 h-5"
+                  className="w-4 h-4 md:w-5 md:h-5"
                   fill="currentColor"
                   viewBox="0 0 24 24"
                   aria-hidden="true"
@@ -535,11 +505,11 @@ export default function Home() {
             </div>
 
             {/* Powered by section */}
-            <div className="mt-8 pt-6  dark:border-neutral-800">
-              <p className="text-center text-sm text-neutral-500 dark:text-neutral-400 mb-4">
+            <div className="mt-6 md:mt-8 pt-4 md:pt-6 border-t border-neutral-200 dark:border-neutral-800">
+              <p className="text-center text-xs md:text-sm text-neutral-500 dark:text-neutral-400 mb-3 md:mb-4">
                 Powered by
               </p>
-              <div className="flex flex-wrap justify-center gap-4">
+              <div className="flex flex-wrap justify-center gap-3 md:gap-4 text-xs md:text-sm">
                 <a
                   href="https://vercel.com/"
                   target="_blank"
