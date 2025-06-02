@@ -42,7 +42,7 @@ const ScrollingPrompts = ({ prompts }: { prompts: string[] }) => {
   }, [controls]);
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center pointer-events-none overflow-hidden z-0">
+    <div className="fixed inset-0 hidden md:flex items-center justify-center pointer-events-none overflow-hidden z-0">
       <div className="relative h-screen w-full max-w-[800px] overflow-hidden">
         {/* Top gradient mask */}
         <div className="absolute top-0 left-0 right-0 h-64 bg-gradient-to-b from-white/90 via-white/50 to-transparent z-10" />
@@ -51,7 +51,7 @@ const ScrollingPrompts = ({ prompts }: { prompts: string[] }) => {
         <div className="absolute bottom-0 left-0 right-0 h-64 bg-gradient-to-t from-white/90 via-white/50 to-transparent z-10" />
 
         <motion.div
-          className="absolute space-y-8 md:space-y-16 w-full"
+          className="absolute space-y-16 w-full"
           animate={controls}
           style={{
             y: 0,
@@ -61,11 +61,11 @@ const ScrollingPrompts = ({ prompts }: { prompts: string[] }) => {
           {prompts.map((prompt, index) => (
             <div
               key={index}
-              className="group text-center opacity-30 md:opacity-20 text-2xl md:text-5xl font-medium text-neutral-900 dark:text-neutral-100 transition-all duration-300 hover:opacity-40 md:hover:opacity-30"
+              className="group text-center opacity-20 text-5xl font-medium text-neutral-900 dark:text-neutral-100 transition-all duration-300 hover:opacity-30"
             >
               <span className="relative">
                 {prompt}
-                <span className="absolute -left-6 top-1/2 -translate-y-1/2 text-xl md:text-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <span className="absolute -left-6 top-1/2 -translate-y-1/2 text-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                   👆
                 </span>
               </span>
@@ -76,11 +76,11 @@ const ScrollingPrompts = ({ prompts }: { prompts: string[] }) => {
             prompts.map((prompt, index) => (
               <div
                 key={`dup${setIndex}-${index}`}
-                className="group text-center opacity-30 md:opacity-20 text-2xl md:text-5xl font-medium text-neutral-900 dark:text-neutral-100 transition-all duration-300 hover:opacity-40 md:hover:opacity-30"
+                className="group text-center opacity-20 text-5xl font-medium text-neutral-900 dark:text-neutral-100 transition-all duration-300 hover:opacity-30"
               >
                 <span className="relative">
                   {prompt}
-                  <span className="absolute -left-6 top-1/2 -translate-y-1/2 text-xl md:text-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <span className="absolute -left-6 top-1/2 -translate-y-1/2 text-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                     👆
                   </span>
                 </span>
@@ -278,11 +278,11 @@ export default function Home() {
       <ScrollingPrompts prompts={scrollingPrompts} />
       <div className="h-full flex items-center justify-center p-4 relative z-10">
         <div className="relative w-full max-w-4xl">
-          {/* Top gradient mask for main content */}
-          <div className="absolute -top-24 left-0 right-0 h-24 bg-gradient-to-b from-transparent to-white/90 dark:to-black/90 z-20" />
+          {/* Top gradient mask for main content - only show on desktop */}
+          <div className="absolute -top-24 left-0 right-0 h-24 bg-gradient-to-b from-transparent to-white/90 dark:to-black/90 z-20 hidden md:block" />
 
-          {/* Bottom gradient mask for main content */}
-          <div className="absolute -bottom-24 left-0 right-0 h-24 bg-gradient-to-t from-transparent to-white/90 dark:to-black/90 z-20" />
+          {/* Bottom gradient mask for main content - only show on desktop */}
+          <div className="absolute -bottom-24 left-0 right-0 h-24 bg-gradient-to-t from-transparent to-white/90 dark:to-black/90 z-20 hidden md:block" />
 
           <div className="relative space-y-4 md:space-y-6 bg-white/80 dark:bg-black/80 backdrop-blur-md rounded-xl p-4 md:p-8">
             {/* Header */}
