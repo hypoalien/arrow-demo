@@ -97,6 +97,10 @@ export default function Home() {
   const player = usePlayer();
   const [transcription, setTranscription] = useState("");
   const [showArchitecture, setShowArchitecture] = useState(false);
+  const [screenStream, setScreenStream] = useState<MediaStream | null>(null);
+  const [audioStream, setAudioStream] = useState<MediaStream | null>(null);
+  const [isScreenSharing, setIsScreenSharing] = useState(false);
+  const [isAudioCapturing, setIsAudioCapturing] = useState(false);
 
   const scrollingPrompts = [
     'Try saying "Open LinkedIn"',
@@ -132,13 +136,113 @@ export default function Home() {
     return () => window.removeEventListener("keydown", handleKeyPress);
   }, []);
 
+  // Function to start screen sharing
+  const startScreenShare = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        video: true,
+        audio: true,
+      });
+      setScreenStream(stream);
+      setIsScreenSharing(true);
+
+      // Handle when user stops sharing
+      stream.getVideoTracks()[0].onended = () => {
+        setScreenStream(null);
+        setIsScreenSharing(false);
+      };
+    } catch (error) {
+      console.error("Error starting screen share:", error);
+      toast.error("Failed to start screen sharing");
+    }
+  };
+
+  // Function to start audio capture
+  const startAudioCapture = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+      });
+      setAudioStream(stream);
+      setIsAudioCapturing(true);
+    } catch (error) {
+      console.error("Error starting audio capture:", error);
+      toast.error("Failed to start audio capture");
+    }
+  };
+
+  // Function to stop all media streams
+  const stopAllMedia = () => {
+    if (screenStream) {
+      screenStream.getTracks().forEach((track) => track.stop());
+      setScreenStream(null);
+      setIsScreenSharing(false);
+    }
+    if (audioStream) {
+      audioStream.getTracks().forEach((track) => track.stop());
+      setAudioStream(null);
+      setIsAudioCapturing(false);
+    }
+  };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      stopAllMedia();
+    };
+  }, []);
+
   const vad = useMicVAD({
     startOnLoad: true,
-    onSpeechEnd: (audio) => {
+    onSpeechEnd: async (audio) => {
       player.stop();
       const wav = utils.encodeWAV(audio);
       const blob = new Blob([wav], { type: "audio/wav" });
-      startTransition(() => submit(blob));
+
+      // Capture screen frame if screen sharing is active
+      let screenFrameBlob: Blob | null = null;
+      if (screenStream) {
+        try {
+          const videoTrack = screenStream.getVideoTracks()[0];
+          const imageCapture = new ImageCapture(videoTrack);
+          const frame = await imageCapture.grabFrame();
+
+          // Create canvas with reduced dimensions
+          const canvas = document.createElement("canvas");
+          const maxDimension = 800; // Maximum width or height
+          const scale = Math.min(
+            maxDimension / frame.width,
+            maxDimension / frame.height
+          );
+          canvas.width = frame.width * scale;
+          canvas.height = frame.height * scale;
+
+          const ctx = canvas.getContext("2d");
+          if (ctx) {
+            // Draw frame with scaling
+            ctx.drawImage(frame, 0, 0, canvas.width, canvas.height);
+
+            // Convert to PNG with reduced quality
+            screenFrameBlob = await new Promise<Blob>((resolve) => {
+              canvas.toBlob(
+                (blob) => {
+                  if (blob) resolve(blob);
+                },
+                "image/png",
+                0.8
+              ); // 0.8 quality for PNG
+            });
+          }
+        } catch (error) {
+          console.error("Error capturing screen frame:", error);
+        }
+      }
+
+      startTransition(() => submit([blob, screenFrameBlob]));
       const isFirefox = navigator.userAgent.includes("Firefox");
       if (isFirefox) vad.pause();
     },
@@ -146,132 +250,137 @@ export default function Home() {
     minSpeechFrames: 4,
   });
 
-  const [messages, submit] = useActionState<Array<Message>, Blob>(
-    async (prevMessages, data) => {
-      const formData = new FormData();
-      formData.append("input", data, "audio.wav");
-      track("Speech input");
+  const [messages, submit] = useActionState<
+    Array<Message>,
+    [Blob, Blob | null]
+  >(async (prevMessages, [audioBlob, screenFrameBlob]) => {
+    const formData = new FormData();
+    formData.append("input", audioBlob, "audio.wav");
+    track("Speech input");
 
-      for (const message of prevMessages) {
-        formData.append("message", JSON.stringify(message));
+    // Add screen frame if available
+    if (screenFrameBlob) {
+      formData.append("screenFrame", screenFrameBlob, "screen.png");
+    }
+
+    for (const message of prevMessages) {
+      formData.append("message", JSON.stringify(message));
+    }
+
+    const submittedAt = Date.now();
+
+    const response = await fetch("/api", {
+      method: "POST",
+      body: formData,
+    });
+
+    const transcript = decodeURIComponent(
+      response.headers.get("X-Transcript") || ""
+    );
+    const text = decodeURIComponent(response.headers.get("X-Response") || "");
+    const toolCall = response.headers.get("X-Tool-Call");
+
+    if (!response.ok || !transcript || (!text && !toolCall)) {
+      if (response.status === 429) {
+        toast.error("Too many requests. Please try again later.");
+      } else {
+        toast.error((await response.text()) || "An error occurred.");
       }
 
-      const submittedAt = Date.now();
+      return prevMessages;
+    }
 
-      const response = await fetch("/api", {
-        method: "POST",
-        body: formData,
+    const latency = Date.now() - submittedAt;
+
+    // Handle tool calls
+    if (toolCall) {
+      try {
+        const toolCallData = JSON.parse(decodeURIComponent(toolCall));
+        console.log("Tool call received:", toolCallData); // Debug log
+
+        if (toolCallData.function.name === "openLinkedIn") {
+          // Check if the tab is already open
+          const linkedInUrl = "http://linkedin.com/in/anisettyanudeep";
+          const existingWindow = window.open("", "_blank");
+
+          if (existingWindow) {
+            // If we can open a new window, close it and open LinkedIn
+            existingWindow.close();
+            window.open(linkedInUrl, "_blank", "noopener,noreferrer");
+          } else {
+            // If we can't open a new window, the tab might be blocked
+            toast.error("Please allow popups to open LinkedIn profile");
+          }
+
+          return [
+            ...prevMessages,
+            {
+              role: "user",
+              content: transcript,
+            },
+            {
+              role: "assistant",
+              content: text || "Opening LinkedIn profile...",
+              latency,
+            },
+          ];
+        }
+
+        if (toolCallData.function.name === "openResume") {
+          // Check if the tab is already open
+          const resumeUrl =
+            "https://drive.google.com/file/d/1cja1FQJ4F79ZQ0vIP6C8w_zPbX8qXIhK/view?usp=sharing";
+          const existingWindow = window.open("", "_blank");
+
+          if (existingWindow) {
+            // If we can open a new window, close it and open resume
+            existingWindow.close();
+            window.open(resumeUrl, "_blank", "noopener,noreferrer");
+          } else {
+            // If we can't open a new window, the tab might be blocked
+            toast.error("Please allow popups to open resume");
+          }
+
+          return [
+            ...prevMessages,
+            {
+              role: "user",
+              content: transcript,
+            },
+            {
+              role: "assistant",
+              content: text || "Opening resume...",
+              latency,
+            },
+          ];
+        }
+      } catch (error) {
+        console.error("Error parsing tool call:", error);
+      }
+    }
+
+    if (response.body) {
+      player.play(response.body, () => {
+        const isFirefox = navigator.userAgent.includes("Firefox");
+        if (isFirefox) vad.start();
       });
+    }
 
-      const transcript = decodeURIComponent(
-        response.headers.get("X-Transcript") || ""
-      );
-      const text = decodeURIComponent(response.headers.get("X-Response") || "");
-      const toolCall = response.headers.get("X-Tool-Call");
+    setTranscription(transcript);
 
-      if (!response.ok || !transcript || (!text && !toolCall)) {
-        if (response.status === 429) {
-          toast.error("Too many requests. Please try again later.");
-        } else {
-          toast.error((await response.text()) || "An error occurred.");
-        }
-
-        return prevMessages;
-      }
-
-      const latency = Date.now() - submittedAt;
-
-      // Handle tool calls
-      if (toolCall) {
-        try {
-          const toolCallData = JSON.parse(decodeURIComponent(toolCall));
-          console.log("Tool call received:", toolCallData); // Debug log
-
-          if (toolCallData.function.name === "openLinkedIn") {
-            // Check if the tab is already open
-            const linkedInUrl = "http://linkedin.com/in/anisettyanudeep";
-            const existingWindow = window.open("", "_blank");
-
-            if (existingWindow) {
-              // If we can open a new window, close it and open LinkedIn
-              existingWindow.close();
-              window.open(linkedInUrl, "_blank", "noopener,noreferrer");
-            } else {
-              // If we can't open a new window, the tab might be blocked
-              toast.error("Please allow popups to open LinkedIn profile");
-            }
-
-            return [
-              ...prevMessages,
-              {
-                role: "user",
-                content: transcript,
-              },
-              {
-                role: "assistant",
-                content: text || "Opening LinkedIn profile...",
-                latency,
-              },
-            ];
-          }
-
-          if (toolCallData.function.name === "openResume") {
-            // Check if the tab is already open
-            const resumeUrl =
-              "https://drive.google.com/file/d/1cja1FQJ4F79ZQ0vIP6C8w_zPbX8qXIhK/view?usp=sharing";
-            const existingWindow = window.open("", "_blank");
-
-            if (existingWindow) {
-              // If we can open a new window, close it and open resume
-              existingWindow.close();
-              window.open(resumeUrl, "_blank", "noopener,noreferrer");
-            } else {
-              // If we can't open a new window, the tab might be blocked
-              toast.error("Please allow popups to open resume");
-            }
-
-            return [
-              ...prevMessages,
-              {
-                role: "user",
-                content: transcript,
-              },
-              {
-                role: "assistant",
-                content: text || "Opening resume...",
-                latency,
-              },
-            ];
-          }
-        } catch (error) {
-          console.error("Error parsing tool call:", error);
-        }
-      }
-
-      if (response.body) {
-        player.play(response.body, () => {
-          const isFirefox = navigator.userAgent.includes("Firefox");
-          if (isFirefox) vad.start();
-        });
-      }
-
-      setTranscription(transcript);
-
-      return [
-        ...prevMessages,
-        {
-          role: "user",
-          content: transcript,
-        },
-        {
-          role: "assistant",
-          content: text,
-          latency,
-        },
-      ];
-    },
-    []
-  );
+    return [
+      ...prevMessages,
+      {
+        role: "user",
+        content: transcript,
+      },
+      {
+        role: "assistant",
+        content: text,
+        latency,
+      },
+    ];
+  }, []);
 
   return (
     <div className="h-screen overflow-hidden relative">
@@ -467,11 +576,6 @@ export default function Home() {
               )}
             </div>
 
-            {/* Voice Button */}
-            <div className="flex justify-center">
-              <VoiceButton isListening={vad.userSpeaking} audioLevel={0} />
-            </div>
-
             {/* Transcription display */}
             {transcription && (
               <div className="text-center text-neutral-500 dark:text-neutral-400">
@@ -479,6 +583,37 @@ export default function Home() {
                 <p className="mt-1 text-sm md:text-base">{transcription}</p>
               </div>
             )}
+
+            {/* Media Controls */}
+            <div className="flex justify-center gap-4 mb-4">
+              <button
+                onClick={isScreenSharing ? stopAllMedia : startScreenShare}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  isScreenSharing
+                    ? "bg-red-500 hover:bg-red-600 text-white"
+                    : "bg-blue-500 hover:bg-blue-600 text-white"
+                }`}
+              >
+                {isScreenSharing ? "Stop Screen Share" : "Start Screen Share"}
+              </button>
+              <button
+                onClick={isAudioCapturing ? stopAllMedia : startAudioCapture}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  isAudioCapturing
+                    ? "bg-red-500 hover:bg-red-600 text-white"
+                    : "bg-blue-500 hover:bg-blue-600 text-white"
+                }`}
+              >
+                {isAudioCapturing
+                  ? "Stop Audio Capture"
+                  : "Start Audio Capture"}
+              </button>
+            </div>
+
+            {/* Voice Button */}
+            <div className="flex justify-center">
+              <VoiceButton isListening={vad.userSpeaking} audioLevel={0} />
+            </div>
 
             {/* GitHub Repository Button */}
             <div className="flex justify-center">
